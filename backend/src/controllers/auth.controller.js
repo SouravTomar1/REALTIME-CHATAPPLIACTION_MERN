@@ -16,6 +16,7 @@ export const signup=async (req,res) =>
     }
      if(password.length<6)
      {
+      
         return res.status(400).json({message:"password should be more than 6 word at least" });
      }
      const user = await User.findOne({email})
