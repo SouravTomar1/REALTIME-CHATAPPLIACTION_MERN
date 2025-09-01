@@ -61,6 +61,9 @@ export const sendMessage = async (req, res) => {
       text,
       image: imageUrl,
     });
+   console.log("cloudinary object:", cloudinary);
+console.log("image value:", image);
+
 
     await newMessage.save();
 
