@@ -1,13 +1,16 @@
 {
   "name": "chat-app",
   "version": "1.0.0",
-  "description": "��#\u0000 \u0000M\u0000E\u0000R\u0000N\u0000C\u0000H\u0000A\u0000T\u0000_\u0000\r\u0000 \u0000",
+  "description": "MERN CHAT APP",
   "main": "index.js",
   "scripts": {
-  "build":"npm install --prefix backend  && npm install --prefix frontend &&  npm run build --prefix frontend",
-  "start": "npm run start --prefix backend"
+    "build": "npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend",
+    "start": "npm run start --prefix backend"
   },
   "keywords": [],
   "author": "",
-  "license":"ISC"
+  "license": "ISC",
+  "engines": {
+    "node": "20.x"
+  }
 }
