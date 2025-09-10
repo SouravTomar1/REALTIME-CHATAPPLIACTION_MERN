@@ -13,14 +13,17 @@ const messageSchema = new mongoose.Schema(
       required: true,
     },
     text: {
-      type: String,
+      type: String, // ✅ translated text (or original if no translation applied)
+    },
+    originalText: {
+      type: String, // ✅ original message before translation
     },
     image: {
-      type: String,
+      type: String, // ✅ Cloudinary image URL
     },
   },
-  { timestamps: true } // ✅ use "timestamps" to enable createdAt & updatedAt
+  { timestamps: true } // ✅ createdAt & updatedAt included
 );
 
-const Message = mongoose.model("Message", messageSchema); // ✅ use PascalCase for model name
+const Message = mongoose.model("Message", messageSchema);
 export default Message;

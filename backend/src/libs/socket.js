@@ -22,6 +22,7 @@ export function getReceiverSocketId(userId) {
 
 io.on("connection", (socket) => {
   console.log("A user connected", socket.id);
+  
 
   // ✅ use auth instead of deprecated query
   const { userId } = socket.handshake.auth;

@@ -1,23 +1,22 @@
 import cloudinary from "../libs/cloudinary.js";
 import User from "../models/user.model.js";
-import Message from "../models/message.model.js"; // ✅ import your Message model
-import { getReceiverSocketId } from "../libs/socket.js";
-import { io } from "../libs/socket.js";
-// Get users for sidebar (excluding yourself)
+import Message from "../models/message.model.js";
+import { getReceiverSocketId, io } from "../libs/socket.js";
+import { translateText } from "../libs/translate.js";
+
+// Get users excluding logged-in user
 export const getuserforsidebar = async (req, res) => {
   try {
     const loggedUserID = req.user._id;
-
     const users = await User.find({ _id: { $ne: loggedUserID } }).select("-password");
-
     res.status(200).json(users);
   } catch (error) {
-    console.log("Error in getuserforsidebar:", error.message);
+    console.error("getuserforsidebar error:", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };
 
-// Get chat messages between two users
+// Get messages between two users
 export const getMessages = async (req, res) => {
   try {
     const { id: userToChatID } = req.params;
@@ -32,51 +31,49 @@ export const getMessages = async (req, res) => {
 
     res.status(200).json(messages);
   } catch (error) {
-    console.log("Error in getMessages:", error.message);
+    console.error("getMessages error:", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };
 
-// Send a message (with optional image upload)
-
+// Send a message (text + optional image + translation)
 export const sendMessage = async (req, res) => {
   try {
-    const { text, image } = req.body;
+    const { text, image, targetLang } = req.body;
     const { id: receiverID } = req.params;
     const senderID = req.user._id;
-    console.log("Cloudinary config test:", cloudinary.config()); // <-- Debug log
 
     let imageUrl = null;
-
-    // Upload image to Cloudinary if it exists
-       if (image) {
-      const uploadResponse = await cloudinary.uploader.upload(image); // <-- This is where the error happens
+    if (image) {
+      const uploadResponse = await cloudinary.uploader.upload(image);
       imageUrl = uploadResponse.secure_url;
     }
 
-    // Create new message
+    // Translate message if targetLang provided
+    let translatedText = text;
+    if (text && targetLang) {
+      translatedText = await translateText(text, targetLang);
+    }
+
     const newMessage = new Message({
       senderID,
       receiverID,
-      text,
+      text: translatedText,
+      originalText: text,  // save original
       image: imageUrl,
     });
-   console.log("cloudinary object:", cloudinary);
-console.log("image value:", image);
-
 
     await newMessage.save();
 
-    // You can emit with socket.io here (e.g. req.io.emit("newMessage", newMessage))
-      const receiverSocketId=getReceiverSocketId(receiverID)
-      {
-        if(receiverSocketId){
-          io.to(receiverSocketId).emit("newMessage",newMessage) //only send the ,essage to the reciever
-        }
-      }
+    // Emit to receiver
+    const receiverSocketId = getReceiverSocketId(receiverID);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("newMessage", newMessage);
+    }
+
     res.status(201).json(newMessage);
   } catch (error) {
-    console.log("Error in sendMessage:", error.message);
+    console.error("sendMessage error:", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };
