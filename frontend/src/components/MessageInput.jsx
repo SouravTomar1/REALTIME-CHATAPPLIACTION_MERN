@@ -175,7 +175,6 @@ const MessageInput = ({ selectedUserId, selectedUserLanguage }) => {
             onChange={handleImageChange}
           />
         </div>
-        
 
         {/* Send button */}
         <button

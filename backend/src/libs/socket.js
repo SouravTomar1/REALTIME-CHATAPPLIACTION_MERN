@@ -26,7 +26,8 @@ io.on("connection", (socket) => {
 
   // ✅ use auth instead of deprecated query
   const { userId } = socket.handshake.auth;
-  if (userId) userSocketMap[userId] = socket.id;
+  if (userId) userSocketMap[userId] = socket.id;  
+  
 
   // Send online users to everyone
   io.emit("getOnlineUsers", Object.keys(userSocketMap));

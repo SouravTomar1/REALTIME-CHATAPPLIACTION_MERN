@@ -59,8 +59,8 @@ export const sendMessage = async (req, res) => {
     if (
       text &&
       targetLang &&
-      targetLang !== "en" && // 🚀 skip if English
-      !/^[\p{Emoji}\s]+$/u.test(text) // 🚀 skip if only emojis
+      targetLang !== "en" &&
+      !/^[\p{Emoji}\s]+$/u.test(text)
     ) {
       translatedText = await translateText(text, targetLang);
     }
@@ -69,13 +69,14 @@ export const sendMessage = async (req, res) => {
       senderID,
       receiverID,
       text: translatedText,
-      originalText: text,  // keep original
+      originalText: text,
       image: imageUrl,
+      status: "sent", // ✅ default
     });
 
     await newMessage.save();
 
-    // Emit to receiver
+    // Emit to receiver (real-time)
     const receiverSocketId = getReceiverSocketId(receiverID);
     if (receiverSocketId) {
       io.to(receiverSocketId).emit("newMessage", newMessage);
@@ -88,3 +89,66 @@ export const sendMessage = async (req, res) => {
   }
 };
 
+// ✅ Update message status (delivered / read)
+export const updateMessageStatus = async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const { status } = req.body; // "delivered" | "read"
+
+    const updated = await Message.findByIdAndUpdate(
+      messageId,
+      { status },
+      { new: true }
+    );
+
+    if (!updated) return res.status(404).json({ error: "Message not found" });
+
+    // Emit to sender
+    const senderSocketId = getReceiverSocketId(updated.senderID);
+    if (senderSocketId) {
+      io.to(senderSocketId).emit("messageStatusUpdated", {
+        messageId,
+        status,
+      });
+    }
+
+    res.json(updated);
+  } catch (error) {
+    console.error("updateMessageStatus error:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// ✅ Add reaction to a message
+export const addReaction = async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const { reaction } = req.body; // 👍 ❤️ 😂
+    const userId = req.user._id;
+
+    const msg = await Message.findById(messageId);
+    if (!msg) return res.status(404).json({ error: "Message not found" });
+
+    msg.reactions.push({ userId, reaction });
+    await msg.save();
+
+    // Emit to both sender & receiver
+    const senderSocketId = getReceiverSocketId(msg.senderID);
+    const receiverSocketId = getReceiverSocketId(msg.receiverID);
+
+    [senderSocketId, receiverSocketId].forEach((sock) => {
+      if (sock) {
+        io.to(sock).emit("reactionAdded", {
+          messageId,
+          reaction,
+          userId,
+        });
+      }
+    });
+
+    res.json(msg);
+  } catch (error) {
+    console.error("addReaction error:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};

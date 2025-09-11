@@ -12,5 +12,9 @@
   "license": "ISC",
   "engines": {
     "node": "20.x"
+  },
+  "dependencies": {
+    "@vitalets/google-translate-api": "^9.2.1",
+    "emoji-picker-react": "^4.13.3"
   }
 }
