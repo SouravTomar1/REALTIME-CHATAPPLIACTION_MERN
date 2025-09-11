@@ -49,9 +49,19 @@ export const sendMessage = async (req, res) => {
       imageUrl = uploadResponse.secure_url;
     }
 
-    // Translate message if targetLang provided
+    // Default to original text
     let translatedText = text;
-    if (text && targetLang) {
+
+    // Skip translation if:
+    // 1. Only emojis, OR
+    // 2. Target language is English ("en"), OR
+    // 3. No targetLang provided
+    if (
+      text &&
+      targetLang &&
+      targetLang !== "en" && // 🚀 skip if English
+      !/^[\p{Emoji}\s]+$/u.test(text) // 🚀 skip if only emojis
+    ) {
       translatedText = await translateText(text, targetLang);
     }
 
@@ -59,7 +69,7 @@ export const sendMessage = async (req, res) => {
       senderID,
       receiverID,
       text: translatedText,
-      originalText: text,  // save original
+      originalText: text,  // keep original
       image: imageUrl,
     });
 
@@ -77,3 +87,4 @@ export const sendMessage = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
