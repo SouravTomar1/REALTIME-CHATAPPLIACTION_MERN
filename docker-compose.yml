@@ -1,0 +1,34 @@
+version: "3.9"
+services:
+  mongo:
+    image: mongo:6
+    container_name: chatapp-mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  backend:
+    build: ./backend
+    container_name: chatapp-backend
+    restart: always
+    ports:
+      - "5002:5002"
+    depends_on:
+      - mongo
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/chatapp
+      - PORT=5002
+
+  frontend:
+    build: ./frontend
+    container_name: chatapp-frontend
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  mongo-data:
