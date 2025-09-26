@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useChatStore } from "../store/useChatStore";
 import { useAuthStore } from "../store/useAuthStore";
 
@@ -43,9 +43,9 @@ const ChatContainer = () => {
       <div className="flex-1 flex flex-col overflow-auto">
         <ChatHeader />
         <MessageSkeleton />
-        <MessageInput 
-          selectedUserId={selectedUser?._id} 
-          selectedUserLanguage={selectedUser?.language} 
+        <MessageInput
+          selectedUserId={selectedUser?._id}
+          selectedUserLanguage={selectedUser?.language}
         />
       </div>
     );
@@ -81,8 +81,8 @@ const ChatContainer = () => {
               </time>
             </div>
 
-            {/* Add group class here to enable hover on tooltip */}
-            <div className="chat-bubble relative group">
+            {/* Bubble with click-to-toggle */}
+            <div className="chat-bubble relative">
               {message.image && (
                 <img
                   src={message.image}
@@ -92,27 +92,33 @@ const ChatContainer = () => {
               )}
 
               {message.text && (
-                <p className="font-semibold relative cursor-pointer">
-                  {message.text}
-
-                  {/* Tooltip for original text */}
-                  {message.originalText && message.originalText !== message.text && (
-                    <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 px-2 py-1 rounded bg-gray-800 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-50 whitespace-nowrap">
-                      {message.originalText}
-                    </span>
-                  )}
-                </p>
+                <ToggleMessageText message={message} />
               )}
             </div>
           </div>
         ))}
       </div>
 
-      <MessageInput 
-        selectedUserId={selectedUser?._id} 
-        selectedUserLanguage={selectedUser?.language} 
+      <MessageInput
+        selectedUserId={selectedUser?._id}
+        selectedUserLanguage={selectedUser?.language}
       />
     </div>
+  );
+};
+
+const ToggleMessageText = ({ message }) => {
+  const [showOriginal, setShowOriginal] = useState(false);
+
+  return (
+    <p
+      className="font-semibold relative cursor-pointer"
+      onClick={() => setShowOriginal((prev) => !prev)}
+    >
+      {showOriginal && message.originalText
+        ? message.originalText
+        : message.text}
+    </p>
   );
 };
 

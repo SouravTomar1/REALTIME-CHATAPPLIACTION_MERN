@@ -1,19 +1,29 @@
 import { Link } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
-import { LogOut, MessageSquare, Settings, User } from "lucide-react";
+import { LogOut, MessageSquare, User, Moon } from "lucide-react";
+import { useThemeStore } from "../store/useThemeStore";
 
 const Navbar = () => {
   const { logout, authUser } = useAuthStore();
+  const { theme, setTheme } = useThemeStore();
+
+  const toggleTheme = () => {
+    const newTheme = theme === "light" ? "dark" : "light";
+    setTheme(newTheme);
+    document.documentElement.classList.toggle("dark", newTheme === "dark");
+  };
 
   return (
     <header
-      className="bg-base-100 border-b border-base-300 fixed w-full top-0 z-40 
-    backdrop-blur-lg "
+      className="bg-base-100 border-b border-base-300 fixed w-full top-0 z-40 backdrop-blur-lg"
     >
       <div className="container mx-auto px-4 h-16">
         <div className="flex items-center justify-between h-full">
           <div className="flex items-center gap-8">
-            <Link to="/" className="flex items-center gap-2.5 hover:opacity-80 transition-all">
+            <Link
+              to="/"
+              className="flex items-center gap-2.5 hover:opacity-80 transition-all"
+            >
               <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center">
                 <MessageSquare className="w-5 h-5 text-primary" />
               </div>
@@ -22,20 +32,21 @@ const Navbar = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <Link
-              to={"/settings"}
-              className={`
-              btn btn-sm gap-2 transition-colors
-              
-              `}
+            {/* Theme toggle button */}
+            <button
+              onClick={toggleTheme}
+              className="btn btn-sm p-2 rounded-full hover:bg-base-200 dark:hover:bg-base-700 transition"
+              title="Toggle Theme"
             >
-              <Settings className="w-4 h-4" />
-              <span className="hidden sm:inline">Settings</span>
-            </Link>
+              <Moon
+                size={16}
+                className={theme === "dark" ? "text-yellow-400" : "text-gray-700"}
+              />
+            </button>
 
             {authUser && (
               <>
-                <Link to={"/profile"} className={`btn btn-sm gap-2`}>
+                <Link to={"/profile"} className="btn btn-sm gap-2">
                   <User className="size-5" />
                   <span className="hidden sm:inline">Profile</span>
                 </Link>
@@ -52,4 +63,5 @@ const Navbar = () => {
     </header>
   );
 };
+
 export default Navbar;

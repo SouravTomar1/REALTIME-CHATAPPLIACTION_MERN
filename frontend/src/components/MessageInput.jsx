@@ -16,18 +16,27 @@ const languages = [
   { code: "ru", label: "Russian" },
 ];
 
-const MessageInput = ({ selectedUserId, selectedUserLanguage }) => {
-  const [text, setText] = useState("");
-  const [imagePreview, setImagePreview] = useState(null);
+const MessageInput = ({ selectedUserId, selectedUserLanguage, isDark = true }) => {
+  const [drafts, setDrafts] = useState({}); // Store draft per user
   const [showEmoji, setShowEmoji] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
-  const fileInputRef = useRef(null);
-  const { sendMessage } = useChatStore();
   const [messageLanguage, setMessageLanguage] = useState(selectedUserLanguage || "en");
 
+  const fileInputRef = useRef(null);
+  const { sendMessage } = useChatStore();
+
+  // Load draft when user changes
   useEffect(() => {
     setMessageLanguage(selectedUserLanguage || "en");
   }, [selectedUserLanguage]);
+
+  const currentDraft = drafts[selectedUserId] || { text: "", image: null };
+  const text = currentDraft.text;
+  const imagePreview = currentDraft.image;
+
+  const updateDraft = (newDraft) => {
+    setDrafts((prev) => ({ ...prev, [selectedUserId]: { ...prev[selectedUserId], ...newDraft } }));
+  };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -36,63 +45,63 @@ const MessageInput = ({ selectedUserId, selectedUserLanguage }) => {
       return;
     }
     const reader = new FileReader();
-    reader.onloadend = () => setImagePreview(reader.result);
+    reader.onloadend = () => updateDraft({ image: reader.result });
     reader.readAsDataURL(file);
   };
 
   const removeImage = () => {
-    setImagePreview(null);
+    updateDraft({ image: null });
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
- const handleSendMessage = async (e) => {
-  e.preventDefault();
-  if (!text.trim() && !imagePreview) return;
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!text.trim() && !imagePreview) return;
 
-  try {
-    // Detect if the message is only emojis (no normal letters/numbers)
-    const isOnlyEmojis = /^[\p{Emoji}\s]+$/u.test(text.trim());
+    try {
+      const isOnlyEmojis = /^[\p{Emoji}\s]+$/u.test(text.trim());
 
-    await sendMessage({
-      text: text.trim(),
-      image: imagePreview,
-      targetLang: isOnlyEmojis ? null : messageLanguage, // 🚀 Skip translation if only emojis
-      receiverId: selectedUserId,
-    });
+      const messageData = {
+        text: text.trim(),
+        image: imagePreview,
+        targetLang: isOnlyEmojis ? null : messageLanguage,
+        receiverId: selectedUserId,
+      };
 
-    setText("");
-    setImagePreview(null);
-    setShowEmoji(false);
-    setShowLangMenu(false);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  } catch (error) {
-    console.error("Failed to send message:", error);
-  }
-};
+      await sendMessage(messageData);
 
+      // Clear draft for this user
+      updateDraft({ text: "", image: null });
+      setShowEmoji(false);
+      setShowLangMenu(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    } catch (error) {
+      console.error("Failed to send message:", error);
+    }
+  };
 
   const handleEmojiClick = (emojiObject) => {
-    setText((prev) => prev + emojiObject.emoji);
+    updateDraft({ text: text + emojiObject.emoji });
     setShowEmoji(false);
   };
 
   return (
-    <div className="p-3 w-full relative bg-gray-900 border-t border-gray-700 rounded-t-lg">
+    <div className="p-3 w-full relative">
       {/* Emoji Picker */}
       {showEmoji && (
-        <div className="absolute bottom-16 left-3 z-50 shadow-lg rounded-lg overflow-hidden">
-          <Picker onEmojiClick={handleEmojiClick} theme="dark" />
+        <div className="absolute bottom-20 left-3 z-50 shadow-lg rounded-lg overflow-hidden">
+          <Picker onEmojiClick={handleEmojiClick} theme={isDark ? "dark" : "light"} />
         </div>
       )}
 
       {/* Language Dropdown */}
       {showLangMenu && (
-        <div className="absolute bottom-16 left-14 z-50 bg-gray-800 text-white rounded-lg shadow-lg p-2 w-44">
+        <div className="absolute bottom-20 left-14 z-50 rounded-lg shadow-lg p-2 w-44 bg-base-200 dark:bg-base-300">
           {languages.map((lang) => (
             <button
               key={lang.code}
-              className={`block w-full text-left px-3 py-2 rounded-md hover:bg-gray-700 ${
-                messageLanguage === lang.code ? "bg-gray-700 font-semibold" : ""
+              className={`block w-full text-left px-3 py-2 rounded-md hover:bg-base-300 dark:hover:bg-base-200 ${
+                messageLanguage === lang.code ? "font-semibold bg-base-300 dark:bg-base-200" : ""
               }`}
               onClick={() => {
                 setMessageLanguage(lang.code);
@@ -105,18 +114,18 @@ const MessageInput = ({ selectedUserId, selectedUserLanguage }) => {
         </div>
       )}
 
-      {/* Image preview */}
+      {/* Image Preview */}
       {imagePreview && (
-        <div className="mb-2 flex items-center gap-2">
+        <div className="mb-3 flex items-center gap-2">
           <div className="relative">
             <img
               src={imagePreview}
               alt="Preview"
-              className="w-24 h-24 object-cover rounded-lg border border-gray-600"
+              className="w-24 h-24 object-cover rounded-lg border border-base-content"
             />
             <button
               onClick={removeImage}
-              className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center text-white hover:bg-red-500 transition"
+              className="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center bg-base-300 dark:bg-base-200"
               type="button"
             >
               <X size={16} />
@@ -125,66 +134,52 @@ const MessageInput = ({ selectedUserId, selectedUserLanguage }) => {
         </div>
       )}
 
-      {/* Message form */}
+      {/* Message Form */}
       <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-        <div className="flex-1 flex items-center gap-2 bg-gray-800 rounded-full px-3 py-2">
-          {/* Emoji button */}
+        <div className="flex-1 flex items-center gap-2 rounded-full px-3 py-2 bg-base-200 dark:bg-base-300">
+          {/* Emoji Button */}
           <button
             type="button"
-            className="p-2 rounded-full hover:bg-gray-700 transition text-white"
+            className="btn btn-ghost btn-circle btn-sm"
             onClick={() => setShowEmoji((prev) => !prev)}
           >
             <Smile size={20} />
           </button>
 
-          {/* Language selector */}
+          {/* Language Button */}
           <button
             type="button"
-            className="p-2 rounded-full hover:bg-gray-700 relative transition text-white"
+            className="relative btn btn-ghost btn-circle btn-sm"
             onClick={() => setShowLangMenu((prev) => !prev)}
           >
             <Globe size={18} />
-            <span className="absolute -bottom-1 -right-1 text-[10px] bg-blue-600 text-white px-1 rounded-full">
+            <span className="absolute -bottom-1 -right-1 text-[10px] px-1 rounded-full bg-blue-500 text-white">
               {messageLanguage.toUpperCase()}
             </span>
           </button>
 
-          {/* Text input */}
+          {/* Text Input */}
           <input
             type="text"
-            className="flex-1 bg-gray-800 text-white outline-none px-3 py-2 rounded-full placeholder-gray-400"
             placeholder="Type a message..."
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => updateDraft({ text: e.target.value })}
+            className="input input-bordered input-sm sm:input-md flex-1 rounded-full"
           />
 
-          {/* Image button */}
+          {/* Image Upload Button */}
           <button
             type="button"
-            className="p-2 rounded-full hover:bg-gray-700 transition text-white"
+            className={`btn btn-ghost btn-circle btn-sm ${imagePreview ? "text-emerald-500" : "text-zinc-400"}`}
             onClick={() => fileInputRef.current?.click()}
           >
             <Image size={20} />
           </button>
-
-          <input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            ref={fileInputRef}
-            onChange={handleImageChange}
-          />
+          <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleImageChange} />
         </div>
-        
 
-        {/* Send button */}
-        <button
-          type="submit"
-          className={`p-3 rounded-full bg-blue-600 hover:bg-blue-700 transition text-white flex items-center justify-center ${
-            !text.trim() && !imagePreview ? "opacity-50 cursor-not-allowed" : ""
-          }`}
-          disabled={!text.trim() && !imagePreview}
-        >
+        {/* Send Button */}
+        <button type="submit" className="btn btn-circle btn-sm" disabled={!text.trim() && !imagePreview}>
           <Send size={22} />
         </button>
       </form>
