@@ -27,8 +27,11 @@ export const translateText = async (text, targetLang) => {
       console.error("OpenRouter translation error:", data);
       return text;
     }
-  } catch (error) {
-    console.error("OpenRouter translation error:", error.message);
-    return text;
-  }
+  } 
+  catch (err) {
+  console.error("OPENROUTER ERROR STATUS:", err.response?.status);
+  console.error("OPENROUTER ERROR DATA:", err.response?.data);
+  console.error("OPENROUTER FULL ERROR:", err.message);
+}
+
 };
