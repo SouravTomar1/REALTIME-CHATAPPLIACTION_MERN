@@ -10,17 +10,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Upgrade from v3 to v4 (or v6) to resolve the Node.js 20 deprecation warning
-      - uses: actions/setup-node@v4
-  with:
-    node-version: 22
+      # 1. Checkout code (IMPORTANT — you missed this)
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
+      # 2. Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # 3. Install dependencies
       - name: Install Dependencies
         run: npm install
 
-      # 2. Fix the Docker build error
+      # 4. Build Docker image
       - name: Build Docker Image
-        # If your Dockerfile is in the root, leave the '.'
-        # If your Dockerfile is in a folder (e.g. 'client'), use: 
-        # docker build -t chat-app ./client
         run: docker build -t chat-app .
