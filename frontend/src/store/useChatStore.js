@@ -1,4 +1,4 @@
-// frontend/src/store/useChatStore.js
+// useChatStore.js
 import { create } from "zustand";
 import toast from "react-hot-toast";
 import { axiosInstance } from "../libs/axios";
@@ -11,12 +11,12 @@ export const useChatStore = create((set, get) => ({
   isUsersLoading: false,
   isMessagesLoading: false,
 
-  // ✅ Fetch all users except logged-in user
   getUsers: async () => {
     set({ isUsersLoading: true });
     try {
       const res = await axiosInstance.get("/messages/users");
-      set({ users: res.data });
+      console.log("users response:", res.data); // debug
+      set({ users: Array.isArray(res.data) ? res.data : res.data.users || [] });
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to load users");
     } finally {
@@ -24,7 +24,6 @@ export const useChatStore = create((set, get) => ({
     }
   },
 
-  // ✅ Fetch chat messages with selected user
   getMessages: async (userId) => {
     set({ isMessagesLoading: true });
     try {
@@ -37,7 +36,6 @@ export const useChatStore = create((set, get) => ({
     }
   },
 
-  // ✅ Send message (with optional image + translation)
   sendMessage: async (messageData) => {
     const { selectedUser, messages } = get();
     try {
@@ -48,13 +46,9 @@ export const useChatStore = create((set, get) => ({
       set({ messages: [...messages, res.data] });
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to send message");
-      
     }
   },
-  
 
-
-  // ✅ Subscribe to socket.io real-time messages
   subscribeToMessages: () => {
     const { selectedUser } = get();
     if (!selectedUser) return;
@@ -71,12 +65,10 @@ export const useChatStore = create((set, get) => ({
     });
   },
 
-  // ✅ Unsubscribe when switching chats
   unsubscribeFromMessages: () => {
     const socket = useAuthStore.getState().socket;
     socket.off("newMessage");
   },
 
-  // ✅ Update selected user
   setSelectedUser: (selectedUser) => set({ selectedUser }),
 }));

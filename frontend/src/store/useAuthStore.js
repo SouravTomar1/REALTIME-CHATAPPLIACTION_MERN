@@ -5,7 +5,9 @@ import { io } from "socket.io-client";
 import { useChatStore } from "./useChatStore"; 
 
 
-const BASE_URL = import.meta.env.MODE==="development" ? "http://localhost:5002": "/"
+const BASE_URL =
+  import.meta.env.VITE_API_URL?.replace("/api", "") ||
+  "http://localhost:5002";
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,
@@ -43,19 +45,29 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  login: async (data) => {
-    set({ isLoggingIn: true });
-    try {
-      const res = await axiosInstance.post("/auth/login", data);
-      set({ authUser: res.data });
-      toast.success("Logged in successfully");
-      get().connectSocket(); // ✅ fixed casing
-    } catch (error) {
-      toast.error(error.response.data.message);
-    } finally {
-      set({ isLoggingIn: false });
-    }
-  },
+ login: async (data) => {
+  set({ isLoggingIn: true });
+
+  try {
+    const res = await axiosInstance.post("/auth/login", data);
+
+    set({ authUser: res.data });
+
+    toast.success("Logged in successfully");
+
+    get().connectSocket();
+
+  } catch (error) {
+    console.log("LOGIN ERROR:", error);
+
+    toast.error(
+      error?.response?.data?.message || "Login failed"
+    );
+
+  } finally {
+    set({ isLoggingIn: false });
+  }
+},
 
   logout: async () => {
     try {
