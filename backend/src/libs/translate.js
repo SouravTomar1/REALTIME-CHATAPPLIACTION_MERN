@@ -33,7 +33,7 @@ export const translateText = async (text, targetLang) => {
         },
 
         body: JSON.stringify({
-          model: "z-ai/glm-4.5-air",
+          model: "openai/gpt-4o-mini",
 
           messages: [
             {
