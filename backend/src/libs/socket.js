@@ -10,7 +10,7 @@ const io = new Server(server, {
   cors: {
     origin: [
       process.env.NODE_ENV === "production"
-        ? "http://localhost:5173"
+        ? "http://43.204.116.254:5002"
         : "http://localhost:5173",
     ],
     methods: ["GET", "POST"],
@@ -26,7 +26,6 @@ export function getReceiverSocketId(userId) {
 
 io.on("connection", (socket) => {
   console.log("A user connected", socket.id);
-  
 
   // ✅ use auth instead of deprecated query
   const { userId } = socket.handshake.auth;

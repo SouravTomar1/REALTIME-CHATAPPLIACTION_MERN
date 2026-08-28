@@ -24,7 +24,7 @@ app.use(
   cors({
     origin:
       process.env.NODE_ENV === "production"
-        ? "http://localhost:5173"
+        ? "http://43.204.116.254:5002"
         : "http://localhost:5173",
     credentials: true,
   })
@@ -44,4 +44,4 @@ if (process.env.NODE_ENV === "production") {
 server.listen(PORT, () => {
   console.log("server is running on PORT:" + PORT);
   connectDB();
-});
+}); 
