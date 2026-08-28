@@ -7,7 +7,7 @@ import { useChatStore } from "./useChatStore";
 
 const BASE_URL =
   import.meta.env.VITE_API_URL?.replace("/api", "") ||
-  "http://localhost:5002";
+  "http://43.204.116.254:5002";
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,
