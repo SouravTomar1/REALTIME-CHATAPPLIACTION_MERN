@@ -9,7 +9,7 @@ export const generateToken = (userId, res) => {
     maxAge: 7*24*60*60*1000, // 7 days
     httpOnly: true,           // can't be accessed by JS
     sameSite: process.env.NODE_ENV === "development" ? "lax" : "strict",
-    secure: process.env.NODE_ENV === "production"
+    secure: false        // set true only once you're on HTTPS
   });
 
   return token;
