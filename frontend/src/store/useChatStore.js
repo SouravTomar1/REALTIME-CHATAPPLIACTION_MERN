@@ -71,4 +71,10 @@ export const useChatStore = create((set, get) => ({
   },
 
   setSelectedUser: (selectedUser) => set({ selectedUser }),
+
+  // ✅ new: allows functional updates, matching how useAuthStore calls it
+  setUsers: (updater) =>
+    set((state) => ({
+      users: typeof updater === "function" ? updater(state.users) : updater,
+    })),
 }));
