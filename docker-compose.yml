@@ -1,10 +1,14 @@
+version: '3.8'
+
 services:
   backend:
     build: ./backend
     env_file: ./backend/.env
+    restart: always
 
   frontend:
     build: ./frontend
+    restart: always
 
   proxy:
     image: nginx:alpine
@@ -17,3 +21,4 @@ services:
     depends_on:
       - backend
       - frontend
+    restart: always
