@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { Server } from "socket.io";
 import http from "http";
 import express from "express";
@@ -5,37 +6,37 @@ import express from "express";
 const app = express();
 const server = http.createServer(app);
 
-// Socket.IO setup
+const allowedOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(",")
+  : ["http://localhost"];
+
 const io = new Server(server, {
   cors: {
-    origin: [
-      process.env.NODE_ENV === "production"
-        ? "http://43.204.116.254:5002"
-        : "http://localhost:5173",
-    ],
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, true);
+      }
+    },
     methods: ["GET", "POST"],
     credentials: true,
   },
 });
 
-const userSocketMap = {}; // { userId: socketId }
+const userSocketMap = {};
 
 export function getReceiverSocketId(userId) {
   return userSocketMap[userId];
 }
 
 io.on("connection", (socket) => {
-  console.log("A user connected", socket.id);
-
-  // ✅ use auth instead of deprecated query
   const { userId } = socket.handshake.auth;
   if (userId) userSocketMap[userId] = socket.id;
 
-  // Send online users to everyone
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
   socket.on("disconnect", () => {
-    console.log("A user disconnected", socket.id);
     if (userId) delete userSocketMap[userId];
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
   });
