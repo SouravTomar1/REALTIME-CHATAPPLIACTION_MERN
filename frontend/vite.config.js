@@ -10,7 +10,12 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://43.204.116.254:5002',
+        target: 'http://43.204.116.254',
+        changeOrigin: true,
+      },
+      '/socket.io': {
+        target: 'http://43.204.116.254',
+        ws: true,
         changeOrigin: true,
       }
     }
